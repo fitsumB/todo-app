@@ -2,7 +2,7 @@
     "name": "Mic Stream PWA",
     "short_name": "Mic Stream",
     "description": "A simple todo app that works offline",
-    "start_url": "/",
+    "start_url": "./",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#007aff",
