@@ -2,7 +2,7 @@
     "name": "Offline Todo App",
     "short_name": "Todo App",
     "description": "A simple todo app that works offline",
-    "start_url": "/",
+    "start_url": "/todo-app/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#007aff",
