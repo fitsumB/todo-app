@@ -1,10 +1,10 @@
 const CACHE_NAME = 'todo-app-v1';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/todo-app/',
+  '/todo-app/index.html',
+  '/todo-app/manifest.json',
+  '/todo-app/icon-192.png',
+  '/todo-app/icon-512.png'
 ];
 
 // Install service worker
