@@ -1,8 +1,8 @@
 {
-    "name": "Offline Todo App",
-    "short_name": "Todo App",
+    "name": "Mic Stream PWA",
+    "short_name": "Mic Stream",
     "description": "A simple todo app that works offline",
-    "start_url": "/todo-app/",
+    "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#007aff",
@@ -17,5 +17,8 @@
         "sizes": "512x512",
         "type": "image/png"
       }
+    ],
+    "permissions": [
+      "microphone"
     ]
   }
