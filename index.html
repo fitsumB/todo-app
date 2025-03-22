@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Todo App</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Todo App">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        #new-task {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        button {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 0 4px 4px 0;
+            font-size: 16px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        li span {
+            flex-grow: 1;
+        }
+        li button {
+            background: #ff3b30;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1>Offline Todo App</h1>
+    <div class="input-group">
+        <input type="text" id="new-task" placeholder="Add a new task...">
+        <button id="add-button">Add</button>
+    </div>
+    <ul id="task-list"></ul>
+
+    <script>
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            const newTaskInput = document.getElementById('new-task');
+            const addButton = document.getElementById('add-button');
+            const taskList = document.getElementById('task-list');
+            
+            // Load tasks from localStorage
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            
+            // Render tasks
+            function renderTasks() {
+                taskList.innerHTML = '';
+                tasks.forEach((task, index) => {
+                    const li = document.createElement('li');
+                    const span = document.createElement('span');
+                    span.textContent = task.text;
+                    if (task.completed) {
+                        span.classList.add('completed');
+                    }
+                    
+                    span.addEventListener('click', () => {
+                        tasks[index].completed = !tasks[index].completed;
+                        localStorage.setItem('tasks', JSON.stringify(tasks));
+                        renderTasks();
+                    });
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', () => {
+                        tasks.splice(index, 1);
+                        localStorage.setItem('tasks', JSON.stringify(tasks));
+                        renderTasks();
+                    });
+                    
+                    li.appendChild(span);
+                    li.appendChild(deleteButton);
+                    taskList.appendChild(li);
+                });
+            }
+            
+            // Add new task
+            addButton.addEventListener('click', () => {
+                const text = newTaskInput.value.trim();
+                if (text) {
+                    tasks.push({ text, completed: false });
+                    localStorage.setItem('tasks', JSON.stringify(tasks));
+                    newTaskInput.value = '';
+                    renderTasks();
+                }
+            });
+            
+            // Add task on Enter key
+            newTaskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addButton.click();
+                }
+            });
+            
+            // Initial render
+            renderTasks();
+        });
+        
+        // Register service worker for offline functionality
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed', err));
+        }
+    </script>
+</body>
+</html>
