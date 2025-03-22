@@ -3,6 +3,7 @@
     "short_name": "Mic Stream",
     "description": "A simple microphone streaming app",
     "start_url": "/Mic-Stream-PWA/",
+    "scope": "/Mic-Stream-PWA/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#007aff",
