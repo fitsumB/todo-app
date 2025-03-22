@@ -1,10 +1,10 @@
 const CACHE_NAME = 'mic-stream-v1';
-const urlsToCache = [
-    './',
-    './index.html',
-    './manifest.json',
-    './icon-192.png',
-    './icon-512.png'
+const ASSETS = [
+  '/Mic-Stream-PWA/',
+  '/Mic-Stream-PWA/index.html',
+  '/Mic-Stream-PWA/manifest.json',
+  '/Mic-Stream-PWA/icon-192.png',
+  '/Mic-Stream-PWA/icon-512.png'
 ];
 
 // Install service worker
