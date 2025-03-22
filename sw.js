@@ -1,19 +1,17 @@
-const CACHE_NAME = 'todo-app-v1';
-const ASSETS = [
-  '/todo-app/',
-  '/todo-app/index.html',
-  '/todo-app/manifest.json',
-  '/todo-app/icon-192.png',
-  '/todo-app/icon-512.png'
+const CACHE_NAME = 'mic-stream-v1';
+const urlsToCache = [
+    '/',
+    '/index.html',
+    '/manifest.json',
+    '/icon-192.png'
 ];
 
 // Install service worker
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())
-  );
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(urlsToCache))
+    );
 });
 
 // Activate and clean up old caches
@@ -33,13 +31,13 @@ self.addEventListener('activate', event => {
 
 // Serve from cache, fall back to network
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-      .catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
-      })
-  );
+    event.respondWith(
+        caches.match(event.request)
+            .then(response => {
+                if (response) {
+                    return response;
+                }
+                return fetch(event.request);
+            })
+    );
 });
