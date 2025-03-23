@@ -1,25 +1,21 @@
 {
-    "name": "Mic Stream PWA",
-    "short_name": "Mic Stream",
-    "description": "A simple microphone streaming app",
-    "start_url": "/Mic-Stream-PWA/",
-    "scope": "/Mic-Stream-PWA/",
+    "name": "Offline Todo App",
+    "short_name": "Todo App",
+    "description": "A simple todo app that works offline",
+    "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#007aff",
     "icons": [
       {
-        "src": "/Mic-Stream-PWA/icon-192.png",
+        "src": "icon-192.png",
         "sizes": "192x192",
         "type": "image/png"
       },
       {
-        "src": "/Mic-Stream-PWA/icon-512.png",
+        "src": "icon-512.png",
         "sizes": "512x512",
         "type": "image/png"
       }
-    ],
-    "permissions": [
-      "microphone"
     ]
   }
