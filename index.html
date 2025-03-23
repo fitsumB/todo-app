@@ -3,225 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <base href="/Mic-Stream-PWA/">
-    <title>Mic Stream PWA</title>
-    <link rel="manifest" href="/Mic-Stream-PWA/manifest.json">
+    <title>Offline Todo App</title>
+    <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Mic Stream">
-    <link rel="apple-touch-icon" href="/Mic-Stream-PWA/icon-192.png">
+    <meta name="apple-mobile-web-app-title" content="Todo App">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             max-width: 500px;
             margin: 0 auto;
             padding: 20px;
-            text-align: center;
         }
         h1 {
             color: #333;
             text-align: center;
         }
-        .status {
-            margin: 20px 0;
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        #new-task {
+            flex-grow: 1;
             padding: 10px;
-            border-radius: 4px;
-        }
-        .connected {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-        .disconnected {
-            background-color: #ffebee;
-            color: #c62828;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
         }
         button {
             background: #007aff;
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 4px;
+            padding: 10px 15px;
+            border-radius: 0 4px 4px 0;
             font-size: 16px;
-            margin: 10px;
-            cursor: pointer;
         }
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
+        ul {
+            list-style: none;
+            padding: 0;
         }
-        #ip-address {
-            font-family: monospace;
-            font-size: 18px;
-            margin: 20px 0;
+        li {
+            display: flex;
+            align-items: center;
             padding: 10px;
-            background: #f5f5f5;
+            border-bottom: 1px solid #eee;
+        }
+        li span {
+            flex-grow: 1;
+        }
+        li button {
+            background: #ff3b30;
             border-radius: 4px;
+            margin-left: 10px;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #999;
         }
     </style>
 </head>
 <body>
-    <h1>Mic Stream PWA</h1>
-    <div id="status" class="status disconnected">Disconnected</div>
-    <div id="ip-address"></div>
-    <button id="startButton">Start Microphone</button>
-    <button id="stopButton" disabled>Stop Microphone</button>
+    <h1>Offline Todo App</h1>
+    <div class="input-group">
+        <input type="text" id="new-task" placeholder="Add a new task...">
+        <button id="add-button">Add</button>
+    </div>
+    <ul id="task-list"></ul>
 
     <script>
-        let mediaStream = null;
-        let socket = null;
-        let audioContext = null;
-        let mediaRecorder = null;
-        const startButton = document.getElementById('startButton');
-        const stopButton = document.getElementById('stopButton');
-        const statusDiv = document.getElementById('status');
-        const ipAddressDiv = document.getElementById('ip-address');
-
-        // Function to get local IP address
-        async function getLocalIP() {
-            try {
-                const response = await fetch('https://api.ipify.org?format=json');
-                const data = await response.json();
-                return data.ip;
-            } catch (error) {
-                console.error('Error getting IP:', error);
-                return 'Unable to get IP address';
-            }
-        }
-
-        // Function to update status
-        function updateStatus(connected) {
-            statusDiv.textContent = connected ? 'Connected' : 'Disconnected';
-            statusDiv.className = `status ${connected ? 'connected' : 'disconnected'}`;
-        }
-
-        // Function to connect to WebSocket server
-        async function connectToServer(serverIP) {
-            try {
-                socket = new WebSocket(`ws://${serverIP}:8765`);
-                
-                socket.onopen = () => {
-                    console.log('Connected to server');
-                    updateStatus(true);
-                    // Send start message
-                    socket.send(JSON.stringify({ type: 'start' }));
-                };
-
-                socket.onclose = () => {
-                    console.log('Disconnected from server');
-                    updateStatus(false);
-                };
-
-                socket.onerror = (error) => {
-                    console.error('WebSocket error:', error);
-                    updateStatus(false);
-                };
-
-                return true;
-            } catch (error) {
-                console.error('Connection error:', error);
-                return false;
-            }
-        }
-
-        // Function to start audio streaming
-        async function startAudioStream() {
-            try {
-                // Create audio context
-                audioContext = new AudioContext();
-                
-                // Get microphone stream
-                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const source = audioContext.createMediaStreamSource(mediaStream);
-                
-                // Create script processor for audio processing
-                const processor = audioContext.createScriptProcessor(1024, 1, 1);
-                source.connect(processor);
-                processor.connect(audioContext.destination);
-                
-                // Handle audio data
-                processor.onaudioprocess = (e) => {
-                    if (socket && socket.readyState === WebSocket.OPEN) {
-                        const audioData = e.inputBuffer.getChannelData(0);
-                        
-                        // Send audio as binary data instead of JSON
-                        // First, send a control message to indicate what's coming
-                        socket.send(JSON.stringify({
-                            type: 'audio-info',
-                            sampleRate: audioContext.sampleRate,
-                            channels: 1
-                        }));
-                        
-                        // Then send the actual audio data as binary
-                        socket.send(audioData);
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            const newTaskInput = document.getElementById('new-task');
+            const addButton = document.getElementById('add-button');
+            const taskList = document.getElementById('task-list');
+            
+            // Load tasks from localStorage
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            
+            // Render tasks
+            function renderTasks() {
+                taskList.innerHTML = '';
+                tasks.forEach((task, index) => {
+                    const li = document.createElement('li');
+                    const span = document.createElement('span');
+                    span.textContent = task.text;
+                    if (task.completed) {
+                        span.classList.add('completed');
                     }
-                };
-                
-                return true;
-            } catch (error) {
-                console.error('Error starting audio stream:', error);
-                return false;
+                    
+                    span.addEventListener('click', () => {
+                        tasks[index].completed = !tasks[index].completed;
+                        localStorage.setItem('tasks', JSON.stringify(tasks));
+                        renderTasks();
+                    });
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', () => {
+                        tasks.splice(index, 1);
+                        localStorage.setItem('tasks', JSON.stringify(tasks));
+                        renderTasks();
+                    });
+                    
+                    li.appendChild(span);
+                    li.appendChild(deleteButton);
+                    taskList.appendChild(li);
+                });
             }
-        }
-
-        // Start microphone and connection
-        startButton.addEventListener('click', async () => {
-            try {
-                // Get server IP from user
-                const serverIP = prompt('Enter server IP address:');
-                if (!serverIP) return;
-
-                // Connect to server
-                const connected = await connectToServer(serverIP);
-                if (!connected) {
-                    alert('Failed to connect to server');
-                    return;
+            
+            // Add new task
+            addButton.addEventListener('click', () => {
+                const text = newTaskInput.value.trim();
+                if (text) {
+                    tasks.push({ text, completed: false });
+                    localStorage.setItem('tasks', JSON.stringify(tasks));
+                    newTaskInput.value = '';
+                    renderTasks();
                 }
-
-                // Start audio streaming
-                const streamStarted = await startAudioStream();
-                if (!streamStarted) {
-                    alert('Failed to start audio stream');
-                    return;
+            });
+            
+            // Add task on Enter key
+            newTaskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addButton.click();
                 }
-                
-                // Update UI
-                startButton.disabled = true;
-                stopButton.disabled = false;
-                updateStatus(true);
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error starting microphone. Please ensure you have granted microphone permissions.');
-            }
+            });
+            
+            // Initial render
+            renderTasks();
         });
-
-        // Stop microphone and connection
-        stopButton.addEventListener('click', () => {
-            if (socket) {
-                socket.send(JSON.stringify({ type: 'stop' }));
-                socket.close();
-                socket = null;
-            }
-            
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-                mediaStream = null;
-            }
-            
-            if (audioContext) {
-                audioContext.close();
-                audioContext = null;
-            }
-            
-            // Update UI
-            startButton.disabled = false;
-            stopButton.disabled = true;
-            updateStatus(false);
-        });
-
+        
         // Register service worker for offline functionality
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/Mic-Stream-PWA/sw.js')
+            navigator.serviceWorker.register('sw.js')
                 .then(reg => console.log('Service Worker registered'))
                 .catch(err => console.log('Service Worker registration failed', err));
         }
